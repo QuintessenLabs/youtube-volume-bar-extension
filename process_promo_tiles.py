@@ -2,7 +2,7 @@ import os
 from PIL import Image, ImageOps
 
 # Source banner path
-source_banner_path = r"C:\Users\Kapil\.gemini\antigravity\brain\3da15ee2-2336-4d88-b7df-fbd6e6026647\promo_banner_raw_1781353987445.png"
+source_banner_path = r"C:\Users\Kapil\.gemini\antigravity\brain\3da15ee2-2336-4d88-b7df-fbd6e6026647\promo_banner_clean_1781354027857.png"
 
 # Destination paths
 extension_dir = r"C:\Users\Kapil\.gemini\antigravity\scratch\youtube-volume-bar-extension"
