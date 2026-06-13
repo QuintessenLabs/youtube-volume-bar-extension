@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Volume Slider Customizer",
+  "name": "Custom YT Volume Slider",
   "version": "1.0",
   "description": "Tired of the volume bar being too small on YouTube? Scale it up or down to whatever width you want (50px to 300px) instantly!",
   "permissions": [

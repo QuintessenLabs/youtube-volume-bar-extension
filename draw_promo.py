@@ -48,7 +48,7 @@ def generate_small_promo():
         font_title = font_label = font_sub = ImageFont.load_default()
 
     # Header
-    draw.text((20, 20), "YouTube VolSlider", font=font_title, fill=(255, 51, 51))  # Red accent
+    draw.text((20, 20), "Custom YT VolSlider", font=font_title, fill=(255, 51, 51))  # Red accent
     draw.text((20, 40), "Resize YouTube's volume controls", font=font_sub, fill=(170, 170, 170))
     
     # --- DEFAULT SLIDER ---
@@ -100,7 +100,7 @@ def generate_marquee_promo():
         font_title = font_subtitle = font_label = font_val = ImageFont.load_default()
 
     # Header Title
-    draw.text((100, 70), "YouTube VolSlider", font=font_title, fill=(255, 51, 51))
+    draw.text((100, 70), "Custom YT Volume Slider", font=font_title, fill=(255, 51, 51))
     draw.text((100, 135), "Tired of the volume bar being too small? Scale it to any width!", font=font_subtitle, fill=(170, 170, 170))
     
     # Draw horizontal divider

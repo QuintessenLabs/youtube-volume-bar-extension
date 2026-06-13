@@ -1,8 +1,8 @@
-# Privacy Policy for YouTube VolSlider
+# Privacy Policy for Custom YT Volume Slider
 
 **Last Updated: June 13, 2026**
 
-This privacy policy governs your use of the Chrome Extension **YouTube VolSlider** ("the Extension"). 
+This privacy policy governs your use of the Chrome Extension **Custom YT Volume Slider** ("the Extension"). 
 
 ### 1. Data Collection and Usage
 The Extension does not collect, store, or transmit any personally identifiable information, browsing history, user activity, or personal data. 

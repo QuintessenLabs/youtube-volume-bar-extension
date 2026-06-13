@@ -1,6 +1,6 @@
-# Chrome Web Store Submission Guide: YouTube VolSlider
+# Chrome Web Store Submission Guide: Custom YT Volume Slider
 
-This document contains all the necessary text, copy, justifications, and settings required to submit the **YouTube VolSlider** extension to the Chrome Web Store and ensure a quick approval.
+This document contains all the necessary text, copy, justifications, and settings required to submit the **Custom YT Volume Slider** extension to the Chrome Web Store and ensure a quick approval.
 
 ---
 
@@ -8,7 +8,7 @@ This document contains all the necessary text, copy, justifications, and setting
 
 | Field | Value / Description | Character Limit (Used) |
 | :--- | :--- | :--- |
-| **Title** | `YouTube VolSlider - Custom Volume Slider Width` | 45 / 45 chars |
+| **Title** | `Custom YT Volume Slider` | 23 / 45 chars |
 | **Short Description** | `Tired of the volume bar being too small on YouTube? Scale it up or down to whatever width you want (50px to 300px) instantly!` | 124 / 132 chars |
 | **Category** | `Productivity` OR `Accessibility` *(Accessibility is recommended as it helps users with fine motor skills who find the tiny 52px slider hard to control)* | N/A |
 | **Search Keywords** | `youtube volume, volume slider, youtube width, volume bar, customize youtube` | 5 keywords max |
@@ -20,7 +20,7 @@ Tired of the volume bar being too small on YouTube?? Use this extension to scale
 
 YouTube's default volume slider is tiny (only 52px wide) and hidden behind a hover state. This makes it difficult to adjust the volume precisely, especially for users on high-resolution monitors or those who find the default controls too small.
 
-YouTube VolSlider replaces the native volume slider with a fully customizable, premium interface that matches YouTube's sleek dark aesthetic. 
+Custom YT Volume Slider replaces the native volume slider with a fully customizable, premium interface that matches YouTube's sleek dark aesthetic. 
 
 🚀 KEY FEATURES:
 • Expand the Width: Choose any width from 50px up to 300px for your volume bar.
@@ -31,7 +31,7 @@ YouTube VolSlider replaces the native volume slider with a fully customizable, p
 • Lightweight & Safe: No third-party bundlers, minimal CPU usage, and zero data tracking.
 
 🔒 PRIVACY FIRST:
-We believe in absolute privacy. YouTube VolSlider works entirely on your local machine:
+We believe in absolute privacy. Custom YT Volume Slider works entirely on your local machine:
 • No tracking code.
 • No external network requests.
 • Settings are stored locally using chrome.storage.local.
@@ -71,7 +71,7 @@ Providing clear instructions to the Chrome Web Store testers prevents rejections
 
 Paste this into the **Instructions for Reviewers** text field:
 ```text
-YouTube VolSlider replaces the default YouTube volume slider with a custom-width version. 
+Custom YT Volume Slider replaces the default YouTube volume slider with a custom-width version. 
 
 To test the extension:
 1. Open any video on YouTube (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ).
@@ -110,4 +110,4 @@ The following files are located in your extension folder:
 
 ### C. Promotional Tile (Highly Recommended)
 - **Dimensions**: **440x280** pixels.
-- **Design**: Keep it simple and focused. Show the glowing red logo icon and the name "YouTube VolSlider" on a dark background. This is displayed when your extension is featured in the store.
+- **Design**: Keep it simple and focused. Show the glowing red logo icon and the name "Custom YT Volume Slider" on a dark background. This is displayed when your extension is featured in the store.
