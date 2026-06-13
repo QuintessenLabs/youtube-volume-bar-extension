@@ -9,16 +9,16 @@ This document contains all the necessary text, copy, justifications, and setting
 | Field | Value / Description | Character Limit (Used) |
 | :--- | :--- | :--- |
 | **Title** | `YouTube VolSlider - Custom Volume Slider Width` | 45 / 45 chars |
-| **Short Description** | `Customize the width of YouTube's volume slider. Keep it always expanded and set your preferred width (50px to 300px).` | 115 / 132 chars |
+| **Short Description** | `Tired of the volume bar being too small on YouTube? Scale it up or down to whatever width you want (50px to 300px) instantly!` | 124 / 132 chars |
 | **Category** | `Productivity` OR `Accessibility` *(Accessibility is recommended as it helps users with fine motor skills who find the tiny 52px slider hard to control)* | N/A |
 | **Search Keywords** | `youtube volume, volume slider, youtube width, volume bar, customize youtube` | 5 keywords max |
 
 ### Detailed Description (Up to 16,000 characters)
 Paste the following text into the **Description** box:
 ```text
-Enhance your YouTube viewing experience with YouTube VolSlider!
+Tired of the volume bar being too small on YouTube?? Use this extension to scale it up or down to whatever width you want!
 
-YouTube's default volume slider is tiny (only 52px wide) and hidden behind a hover state. This makes it difficult to adjust the volume precisely, especially for users on high-resolution monitors or those who prefer ease of access.
+YouTube's default volume slider is tiny (only 52px wide) and hidden behind a hover state. This makes it difficult to adjust the volume precisely, especially for users on high-resolution monitors or those who find the default controls too small.
 
 YouTube VolSlider replaces the native volume slider with a fully customizable, premium interface that matches YouTube's sleek dark aesthetic. 
 
