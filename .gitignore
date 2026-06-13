@@ -1,0 +1,14 @@
+# Package files
+*.crx
+*.zip
+*.pem
+
+# Developer tools & source assets
+icon_source.png
+resize_icons.py
+
+# System and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

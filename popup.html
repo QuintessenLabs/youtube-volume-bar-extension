@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Volume Slider Customizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 24 24" width="22" height="22" class="logo-icon">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-4h2v4zm0-6H9V8h2v2zm4 6h-2V8h2v8z" fill="currentColor"/>
+        </svg>
+        <span class="logo-text">YouTube VolSlider</span>
+      </div>
+      <div class="version">v1.0</div>
+    </header>
+
+    <main>
+      <div class="card">
+        <div class="value-display">
+          <span id="width-value">120</span>
+          <span class="unit">px</span>
+        </div>
+        
+        <div class="slider-container">
+          <label for="width-slider" class="slider-label">Slider Width</label>
+          <div class="range-wrapper">
+            <span class="limit-label">50</span>
+            <input type="range" id="width-slider" min="50" max="300" step="5" value="120">
+            <span class="limit-label">300</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Always Expanded toggle -->
+      <div class="card toggle-card">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Always Expanded</span>
+            <span class="toggle-desc">Keep slider open without hovering</span>
+          </div>
+          <label class="toggle-switch" for="always-expanded-toggle">
+            <input type="checkbox" id="always-expanded-toggle">
+            <span class="toggle-thumb"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="preview-section">
+        <div class="section-title">Live Preview</div>
+        <div class="mock-player-controls">
+          <!-- Mock Speaker Icon -->
+          <svg class="mock-speaker" height="16" viewBox="0 0 24 24" width="16">
+            <path d="M8 9H4v6h4l5 5V4L8 9zm11 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="#fff"/>
+          </svg>
+          <!-- Mock Volume Panel -->
+          <div class="mock-volume-panel" id="mock-panel">
+            <div class="mock-volume-slider">
+              <div class="mock-slider-track">
+                <div class="mock-slider-track-fill" id="mock-track-fill"></div>
+              </div>
+              <div class="mock-slider-handle" id="mock-handle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <span>Drag slider to adjust length in real-time</span>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
