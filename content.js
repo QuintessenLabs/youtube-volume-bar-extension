@@ -4,14 +4,17 @@
   // Inject page-context script to interact with YouTube's movie player API
   const apiScript = document.createElement('script');
   apiScript.textContent = `
-    document.addEventListener('yt-set-volume', (e) => {
-      const player = document.getElementById('movie_player');
-      if (player) {
-        if (e.detail.muted) {
-          player.mute();
-        } else {
-          player.unMute();
-          player.setVolume(e.detail.volume);
+    window.addEventListener('message', (e) => {
+      if (e.source !== window) return;
+      if (e.data && e.data.type === 'YT_SET_VOLUME') {
+        const player = document.getElementById('movie_player');
+        if (player) {
+          if (e.data.muted) {
+            if (typeof player.mute === 'function') player.mute();
+          } else {
+            if (typeof player.unMute === 'function') player.unMute();
+            if (typeof player.setVolume === 'function') player.setVolume(e.data.volume);
+          }
         }
       }
     });
@@ -159,13 +162,20 @@
     const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const volPct = Math.round(fraction * 100);
 
-    // Notify main-world script to invoke YouTube Player API (which updates and saves volume)
-    document.dispatchEvent(new CustomEvent('yt-set-volume', {
-      detail: {
-        volume: volPct,
-        muted: volPct <= 0
-      }
-    }));
+    // 1. Instantly update the HTML5 video element and slider UI for zero-latency visual feedback
+    const vol = fractionToVolume(fraction);
+    video.muted = volPct <= 0;
+    if (volPct > 0) {
+      video.volume = vol;
+    }
+    updateUI(video);
+
+    // 2. Notify main-world script via postMessage to invoke YouTube Player API (updates internal state + saves volume)
+    window.postMessage({
+      type: 'YT_SET_VOLUME',
+      volume: volPct,
+      muted: volPct <= 0
+    }, '*');
   }
 
   // ─── Build and return the custom slider DOM ────────────────────────────────
@@ -236,13 +246,22 @@
       else return;
 
       e.preventDefault();
+      
+      // Instantly update the video element and UI locally
+      const vol = fractionToVolume(newFrac);
+      video.muted = newFrac <= 0;
+      if (newFrac > 0) {
+        video.volume = vol;
+      }
+      updateUI(video);
+
+      // Notify main world to update player volume settings persistently
       const volPct = Math.round(newFrac * 100);
-      document.dispatchEvent(new CustomEvent('yt-set-volume', {
-        detail: {
-          volume: volPct,
-          muted: volPct <= 0
-        }
-      }));
+      window.postMessage({
+        type: 'YT_SET_VOLUME',
+        volume: volPct,
+        muted: volPct <= 0
+      }, '*');
     });
 
     return wrap;
