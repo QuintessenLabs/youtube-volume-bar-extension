@@ -1,30 +1,18 @@
 (function () {
   'use strict';
 
-  // Inject page-context script to interact with YouTube's movie player API
-  const apiScript = document.createElement('script');
-  apiScript.textContent = `
-    window.addEventListener('message', (e) => {
-      if (e.source !== window) return;
-      if (e.data && e.data.type === 'YT_SET_VOLUME') {
-        const player = document.getElementById('movie_player');
-        if (player) {
-          if (e.data.muted) {
-            if (typeof player.mute === 'function') player.mute();
-          } else {
-            if (typeof player.unMute === 'function') player.unMute();
-            if (typeof player.setVolume === 'function') player.setVolume(e.data.volume);
-          }
-        }
-      }
-    });
-  `;
-  (document.head || document.documentElement).appendChild(apiScript);
+  // Communications with the MAIN world (injected.js) are handled via postMessage
 
   const DEFAULT_WIDTH = 120;
   let currentWidth = DEFAULT_WIDTH;
   let alwaysExpanded = false;
   let styleEl = null;
+
+  // Persistent volume state (override protection)
+  let savedVolume = 0.3;
+  let savedMuted = false;
+  let userChangingVolume = false;
+  let userChangeTimeout = null;
 
   // ─── Logarithmic (quadratic) volume curve ─────────────────────────────────
   // YouTube uses a quadratic curve so the slider feels logarithmic to the ear.
@@ -152,6 +140,26 @@
     if (track) track.setAttribute('aria-valuenow', Math.round(frac * 100));
   }
 
+  function syncPlayerVolume() {
+    const frac = volumeToFraction(savedVolume);
+    const volPct = Math.round(frac * 100);
+    window.postMessage({
+      type: 'YT_SET_VOLUME',
+      volume: volPct,
+      muted: savedMuted
+    }, '*');
+  }
+
+  function enforceSavedVolume(video) {
+    if (!video) return;
+    video.muted = savedMuted;
+    if (!savedMuted) {
+      video.volume = savedVolume;
+    }
+    updateUI(video);
+    syncPlayerVolume();
+  }
+
   // ─── Apply a drag position (clientX) to the video volume ──────────────────
   function applySeek(clientX) {
     const track = document.getElementById('yt-cvol-track');
@@ -162,11 +170,21 @@
     const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const volPct = Math.round(fraction * 100);
 
-    // 1. Instantly update the HTML5 video element and slider UI for zero-latency visual feedback
+    // Set user changing flag
+    userChangingVolume = true;
+    clearTimeout(userChangeTimeout);
+    userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 200);
+
+    // Save state
     const vol = fractionToVolume(fraction);
-    video.muted = volPct <= 0;
-    if (volPct > 0) {
-      video.volume = vol;
+    savedVolume = vol;
+    savedMuted = volPct <= 0;
+    chrome.storage.local.set({ savedVolume, savedMuted });
+
+    // 1. Instantly update the HTML5 video element and slider UI for zero-latency visual feedback
+    video.muted = savedMuted;
+    if (!savedMuted) {
+      video.volume = savedVolume;
     }
     updateUI(video);
 
@@ -174,7 +192,7 @@
     window.postMessage({
       type: 'YT_SET_VOLUME',
       volume: volPct,
-      muted: volPct <= 0
+      muted: savedMuted
     }, '*');
   }
 
@@ -246,12 +264,22 @@
       else return;
 
       e.preventDefault();
+
+      // Set user changing flag
+      userChangingVolume = true;
+      clearTimeout(userChangeTimeout);
+      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 200);
+      
+      // Save state
+      const vol = fractionToVolume(newFrac);
+      savedVolume = vol;
+      savedMuted = newFrac <= 0;
+      chrome.storage.local.set({ savedVolume, savedMuted });
       
       // Instantly update the video element and UI locally
-      const vol = fractionToVolume(newFrac);
-      video.muted = newFrac <= 0;
-      if (newFrac > 0) {
-        video.volume = vol;
+      video.muted = savedMuted;
+      if (!savedMuted) {
+        video.volume = savedVolume;
       }
       updateUI(video);
 
@@ -260,7 +288,7 @@
       window.postMessage({
         type: 'YT_SET_VOLUME',
         volume: volPct,
-        muted: volPct <= 0
+        muted: savedMuted
       }, '*');
     });
 
@@ -296,10 +324,54 @@
     if (video) updateUI(video);
   }
 
-  // ─── Keep in sync with system/keyboard volume changes ─────────────────────
+  // ─── Detect user-initiated adjustments to temporarily bypass override safety ───
+  document.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (key === 'arrowup' || key === 'arrowdown' || key === 'm') {
+      userChangingVolume = true;
+      clearTimeout(userChangeTimeout);
+      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 300);
+    }
+  }, true);
+
+  document.addEventListener('wheel', (e) => {
+    if (e.target && e.target.closest('.ytp-volume-area')) {
+      userChangingVolume = true;
+      clearTimeout(userChangeTimeout);
+      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 300);
+    }
+  }, { capture: true, passive: true });
+
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.closest('.ytp-mute-button')) {
+      userChangingVolume = true;
+      clearTimeout(userChangeTimeout);
+      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 300);
+    }
+  }, true);
+
+  // ─── Keep in sync & protect against background player resets ───────────────
   document.addEventListener('volumechange', (e) => {
-    if (e.target && e.target.classList.contains('html5-main-video')) {
-      updateUI(e.target);
+    const video = e.target;
+    if (!video || !video.classList.contains('html5-main-video')) return;
+
+    const currentVol = video.muted ? 0 : video.volume;
+
+    if (userChangingVolume) {
+      // User manual adjustment -> Accept and persist new volume settings
+      savedVolume = video.volume;
+      savedMuted = video.muted;
+      chrome.storage.local.set({ savedVolume, savedMuted });
+      updateUI(video);
+    } else {
+      // Background change (YouTube player auto-reset, ads, playlist navigate)
+      // Check if it deviates from our saved state, and if so, force our volume
+      const volDiff = Math.abs(currentVol - (savedMuted ? 0 : savedVolume));
+      if (volDiff > 0.01 || video.muted !== savedMuted) {
+        enforceSavedVolume(video);
+      } else {
+        updateUI(video);
+      }
     }
   }, true);
 
@@ -312,30 +384,42 @@
     } else {
       // Force sync with the active video player when navigation happens (new playlist video)
       const video = document.querySelector('video.html5-main-video');
-      if (video) updateUI(video);
+      if (video) {
+        enforceSavedVolume(video);
+      }
     }
   });
 
   // ─── Initialize ────────────────────────────────────────────────────────────
   chrome.storage.local.get(
-    { volumeWidth: DEFAULT_WIDTH, alwaysExpanded: false },
+    { volumeWidth: DEFAULT_WIDTH, alwaysExpanded: false, savedVolume: 0.3, savedMuted: false },
     (data) => {
       currentWidth = data.volumeWidth;
       alwaysExpanded = data.alwaysExpanded;
+      savedVolume = data.savedVolume;
+      savedMuted = data.savedMuted;
+      
       injectStyles(currentWidth, alwaysExpanded);
 
-    const ready = () => {
-      inject();
-      const playerRoot = document.querySelector('#movie_player') || document.body;
-      navObserver.observe(playerRoot, { childList: true, subtree: true });
-    };
+      const ready = () => {
+        inject();
+        
+        // Also force sync on main video element inside ready
+        const video = document.querySelector('video.html5-main-video');
+        if (video) {
+          enforceSavedVolume(video);
+        }
+        
+        const playerRoot = document.querySelector('#movie_player') || document.body;
+        navObserver.observe(playerRoot, { childList: true, subtree: true });
+      };
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', ready);
-    } else {
-      ready();
-    }
-  });
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ready);
+      } else {
+        ready();
+      }
+    });
 
   // ─── Hot-reload when user adjusts settings in popup ─────────────────────
   chrome.storage.onChanged.addListener((changes, area) => {

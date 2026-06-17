@@ -16,6 +16,7 @@ crx_dest_path = os.path.join(parent_dir, "youtube-volume-bar-extension.crx")
 files_to_include = [
     "manifest.json",
     "content.js",
+    "injected.js",
     "popup.html",
     "popup.css",
     "popup.js",
