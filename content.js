@@ -1,6 +1,23 @@
 (function () {
   'use strict';
 
+  // Inject page-context script to interact with YouTube's movie player API
+  const apiScript = document.createElement('script');
+  apiScript.textContent = `
+    document.addEventListener('yt-set-volume', (e) => {
+      const player = document.getElementById('movie_player');
+      if (player) {
+        if (e.detail.muted) {
+          player.mute();
+        } else {
+          player.unMute();
+          player.setVolume(e.detail.volume);
+        }
+      }
+    });
+  `;
+  (document.head || document.documentElement).appendChild(apiScript);
+
   const DEFAULT_WIDTH = 120;
   let currentWidth = DEFAULT_WIDTH;
   let alwaysExpanded = false;
@@ -37,8 +54,9 @@
         align-items: center;
         height: 36px;
         width: 0px;
+        margin-right: 0px;
         overflow: hidden;
-        transition: width 0.12s ease;
+        transition: width 0.12s ease, margin-right 0.12s ease;
         flex-shrink: 0;
         vertical-align: middle;
       }
@@ -47,11 +65,13 @@
       ${alwaysExpanded ? `
       #yt-cvol-wrap {
         width: ${width}px !important;
+        margin-right: 8px !important;
       }
       ` : `
       .ytp-volume-area:hover #yt-cvol-wrap,
       #yt-cvol-wrap.yt-cvol-dragging {
         width: ${width}px;
+        margin-right: 8px;
       }
       `}
 
@@ -114,6 +134,10 @@
     const handle = document.getElementById('yt-cvol-handle');
     if (!fill || !handle || !video) return;
 
+    if (!video.classList.contains('html5-main-video')) {
+      return;
+    }
+
     const vol = video.muted ? 0 : Math.max(0, Math.min(1, video.volume));
     const frac = volumeToFraction(vol);
     const pct = (frac * 100).toFixed(3) + '%';
@@ -128,21 +152,20 @@
   // ─── Apply a drag position (clientX) to the video volume ──────────────────
   function applySeek(clientX) {
     const track = document.getElementById('yt-cvol-track');
-    const video = document.querySelector('video');
+    const video = document.querySelector('video.html5-main-video');
     if (!track || !video) return;
 
     const rect = track.getBoundingClientRect();
     const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const vol = fractionToVolume(fraction);
+    const volPct = Math.round(fraction * 100);
 
-    if (vol <= 0) {
-      video.muted = true;
-    } else {
-      video.muted = false;
-      video.volume = vol;
-    }
-
-    updateUI(video);
+    // Notify main-world script to invoke YouTube Player API (which updates and saves volume)
+    document.dispatchEvent(new CustomEvent('yt-set-volume', {
+      detail: {
+        volume: volPct,
+        muted: volPct <= 0
+      }
+    }));
   }
 
   // ─── Build and return the custom slider DOM ────────────────────────────────
@@ -202,7 +225,7 @@
 
     // ── Keyboard support ──
     track.addEventListener('keydown', (e) => {
-      const video = document.querySelector('video');
+      const video = document.querySelector('video.html5-main-video');
       if (!video) return;
       const step = 0.05;
       const currentFrac = volumeToFraction(video.muted ? 0 : video.volume);
@@ -213,10 +236,13 @@
       else return;
 
       e.preventDefault();
-      const vol = fractionToVolume(newFrac);
-      video.muted = vol <= 0;
-      if (vol > 0) video.volume = vol;
-      updateUI(video);
+      const volPct = Math.round(newFrac * 100);
+      document.dispatchEvent(new CustomEvent('yt-set-volume', {
+        detail: {
+          volume: volPct,
+          muted: volPct <= 0
+        }
+      }));
     });
 
     return wrap;
@@ -247,13 +273,15 @@
     }
 
     // Sync initial state
-    const video = document.querySelector('video');
+    const video = document.querySelector('video.html5-main-video');
     if (video) updateUI(video);
   }
 
   // ─── Keep in sync with system/keyboard volume changes ─────────────────────
   document.addEventListener('volumechange', (e) => {
-    if (e.target && e.target.tagName === 'VIDEO') updateUI(e.target);
+    if (e.target && e.target.classList.contains('html5-main-video')) {
+      updateUI(e.target);
+    }
   }, true);
 
   // ─── Re-inject on YouTube SPA navigation (page changes without reload) ─────
@@ -262,6 +290,10 @@
     if (!document.getElementById('yt-cvol-wrap')) {
       clearTimeout(injectDebounce);
       injectDebounce = setTimeout(inject, 300);
+    } else {
+      // Force sync with the active video player when navigation happens (new playlist video)
+      const video = document.querySelector('video.html5-main-video');
+      if (video) updateUI(video);
     }
   });
 
