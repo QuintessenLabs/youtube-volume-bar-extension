@@ -11,8 +11,19 @@
   // Persistent volume state (override protection)
   let savedVolume = 0.3;
   let savedMuted = false;
-  let userChangingVolume = false;
-  let userChangeTimeout = null;
+  let lastUserVolumeChangeTime = 0;
+  let isEnforcing = false;
+
+  function markUserChanging() {
+    lastUserVolumeChangeTime = Date.now();
+  }
+
+  function isUserChanging() {
+    const wrap = document.getElementById('yt-cvol-wrap');
+    const dragging = wrap && wrap.classList.contains('yt-cvol-dragging');
+    if (dragging) return true;
+    return (Date.now() - lastUserVolumeChangeTime) < 800;
+  }
 
   // ─── Logarithmic (quadratic) volume curve ─────────────────────────────────
   // YouTube uses a quadratic curve so the slider feels logarithmic to the ear.
@@ -151,13 +162,19 @@
   }
 
   function enforceSavedVolume(video) {
-    if (!video) return;
+    if (!video || isEnforcing) return;
+    isEnforcing = true;
+
     video.muted = savedMuted;
     if (!savedMuted) {
       video.volume = savedVolume;
     }
     updateUI(video);
     syncPlayerVolume();
+
+    setTimeout(() => {
+      isEnforcing = false;
+    }, 200);
   }
 
   // ─── Apply a drag position (clientX) to the video volume ──────────────────
@@ -170,10 +187,8 @@
     const fraction = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const volPct = Math.round(fraction * 100);
 
-    // Set user changing flag
-    userChangingVolume = true;
-    clearTimeout(userChangeTimeout);
-    userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 200);
+    // Mark user activity
+    markUserChanging();
 
     // Save state
     const vol = fractionToVolume(fraction);
@@ -265,10 +280,8 @@
 
       e.preventDefault();
 
-      // Set user changing flag
-      userChangingVolume = true;
-      clearTimeout(userChangeTimeout);
-      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 200);
+      // Mark user activity
+      markUserChanging();
       
       // Save state
       const vol = fractionToVolume(newFrac);
@@ -328,36 +341,30 @@
   document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (key === 'arrowup' || key === 'arrowdown' || key === 'm') {
-      userChangingVolume = true;
-      clearTimeout(userChangeTimeout);
-      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 300);
+      markUserChanging();
     }
   }, true);
 
   document.addEventListener('wheel', (e) => {
     if (e.target && e.target.closest('.ytp-volume-area')) {
-      userChangingVolume = true;
-      clearTimeout(userChangeTimeout);
-      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 300);
+      markUserChanging();
     }
   }, { capture: true, passive: true });
 
   document.addEventListener('click', (e) => {
     if (e.target && e.target.closest('.ytp-mute-button')) {
-      userChangingVolume = true;
-      clearTimeout(userChangeTimeout);
-      userChangeTimeout = setTimeout(() => { userChangingVolume = false; }, 300);
+      markUserChanging();
     }
   }, true);
 
   // ─── Keep in sync & protect against background player resets ───────────────
   document.addEventListener('volumechange', (e) => {
     const video = e.target;
-    if (!video || !video.classList.contains('html5-main-video')) return;
+    if (!video || !video.classList.contains('html5-main-video') || isEnforcing) return;
 
     const currentVol = video.muted ? 0 : video.volume;
 
-    if (userChangingVolume) {
+    if (isUserChanging()) {
       // User manual adjustment -> Accept and persist new volume settings
       savedVolume = video.volume;
       savedMuted = video.muted;
