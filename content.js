@@ -13,6 +13,8 @@
   let savedMuted = false;
   let lastUserVolumeChangeTime = 0;
   let isEnforcing = false;
+  let dragEndTimeout = null;
+  let justFinishedDragging = false;
 
   function markUserChanging() {
     lastUserVolumeChangeTime = Date.now();
@@ -191,7 +193,8 @@
     markUserChanging();
 
     // Save state
-    const vol = fractionToVolume(fraction);
+    const quantizedFraction = volPct / 100;
+    const vol = fractionToVolume(quantizedFraction);
     savedVolume = vol;
     savedMuted = volPct <= 0;
     chrome.storage.local.set({ savedVolume, savedMuted });
@@ -260,6 +263,12 @@
         wrap.classList.remove('yt-cvol-dragging');
         document.removeEventListener('mousemove', onMove, true);
         document.removeEventListener('mouseup', onUp, true);
+
+        justFinishedDragging = true;
+        clearTimeout(dragEndTimeout);
+        dragEndTimeout = setTimeout(() => {
+          justFinishedDragging = false;
+        }, 500);
       };
 
       document.addEventListener('mousemove', onMove, true);
@@ -361,6 +370,11 @@
   document.addEventListener('volumechange', (e) => {
     const video = e.target;
     if (!video || !video.classList.contains('html5-main-video') || isEnforcing) return;
+
+    // Ignore all volumechange events while dragging or during the post-drag cooldown
+    const wrap = document.getElementById('yt-cvol-wrap');
+    const dragging = wrap && wrap.classList.contains('yt-cvol-dragging');
+    if (dragging || justFinishedDragging) return;
 
     const currentVol = video.muted ? 0 : video.volume;
 
