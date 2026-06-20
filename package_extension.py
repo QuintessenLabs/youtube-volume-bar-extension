@@ -17,6 +17,7 @@ files_to_include = [
     "manifest.json",
     "content.js",
     "injected.js",
+    "mouse-nav.js",
     "popup.html",
     "popup.css",
     "popup.js",

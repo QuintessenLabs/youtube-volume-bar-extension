@@ -43,6 +43,16 @@
       "world": "MAIN",
       "run_at": "document_start",
       "all_frames": false
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "mouse-nav.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ]
 }
